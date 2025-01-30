@@ -1,4 +1,4 @@
-# Motorsport Trip Planner
+# Motorsport Trip Finder
 
 ## Inspiration
 
