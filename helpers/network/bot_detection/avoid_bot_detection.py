@@ -3,6 +3,14 @@ from swiftshadow.classes import ProxyInterface
 
 from helpers.network.bot_detection.models import request_proxy, ua_filters
 
+# this proxy manager will create a pool of valid proxies
+proxy_manager = ProxyInterface(
+    # countries=["US"],  # only US proxies - buggy and not reliabe yet - use with caution
+    cachePeriod=5,  # cache the proxies for 5 minutes
+    maxProxies=50,  # get a maximum of 50 proxies
+    autoRotate=True,  # auto rotate the proxies
+)
+
 
 def get_random_user_agent(ua_filter: ua_filters.UserAgentFilters) -> str:
     """
@@ -24,12 +32,9 @@ def get_random_user_agent(ua_filter: ua_filters.UserAgentFilters) -> str:
     return ua.random
 
 
-def get_random_proxy(proxy_manager: ProxyInterface) -> str:
+def get_random_proxy() -> str:
     """
     Get a random proxy from the rotating proxy manager.
-
-    Args:
-        proxy_manager (ProxyInterface): The rotating proxy manager, that checks the validity of the proxy.
 
     Returns:
         str: The random proxy string.

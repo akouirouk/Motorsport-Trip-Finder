@@ -5,9 +5,14 @@ description = "A tool to find motorsport events and trips."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aiobotocore>=2.19.0",
     "fake-useragent>=2.0.3",
     "fastapi>=0.115.7",
     "httpx>=0.28.1",
+    "pendulum>=3.0.0",
+    "prefect>=3.1.15",
+    "prefect-aws>=0.5.3",
+    "pydantic-settings>=2.7.1",
     "sqlalchemy>=2.0.37",
     "stamina>=24.3.0",
     "swiftshadow>=2.0.1",

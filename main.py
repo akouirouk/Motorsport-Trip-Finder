@@ -1,11 +1,37 @@
-from helpers.network.bot_detection import ua_filters, get_random_user_agent
+import asyncio
+from contextlib import AsyncExitStack
 
-from swiftshadow.classes import ProxyInterface
+from aiobotocore.session import AioSession
+from prefect import flow, get_run_logger, task
+from pydantic import ConfigDict, validate_call
 
-from helpers.network.bot_detection import get_random_proxy
+from aws_ops.s3 import create_s3_client
+from helpers.network.bot_detection import (
+    get_random_proxy,
+    get_random_user_agent,
+    ua_filters,
+)
 
 
-def main():
+@task(retries=2, persist_result=False)
+@validate_call(config=ConfigDict(arbitrary_types_allowed=True), validate_return=True)
+async def ingest_data():
+    # create the async S3 session
+    session = AioSession()
+
+    async with AsyncExitStack() as exit_stack:
+        # create the S3 client to interact with buckets in S3
+        s3_client = await create_s3_client(session, exit_stack)
+
+        # explicity close the S3 client
+        await s3_client.close()
+
+
+@flow(name="Motorsport Trip Finder", log_prints=True, persist_result=False)
+async def run_mtf_data_processor():
+    # get the Prefect logger
+    logger = get_run_logger()
+
     # specify the filters for a User-Agent
     ua_filter = ua_filters.UserAgentFilters(
         browser=ua_filters.BrowserEnum.SafariMobile,
@@ -14,18 +40,13 @@ def main():
     )
     # get a random user agent based on the filters
     user_agent = get_random_user_agent(ua_filter=ua_filter)
-    print(f"Random user agent: {user_agent}")
+    logger.info(f"Random user agent: {user_agent}")
 
-    # this proxy manager will create a pool of valid proxies
-    proxy_manager = ProxyInterface(
-        countries=["US"],  # only US proxies
-        cachePeriod=1,  # cache the proxies for 5 minutes
-        maxProxies=30,  # get a maximum of 50 proxies
-        autoRotate=True,  # auto rotate the proxies
-    )
     # get a random proxy from the pool
-    random_proxy = get_random_proxy(proxy_manager=proxy_manager)
-    print(f"Random proxy: {random_proxy}")
+    random_proxy = get_random_proxy()
+    logger.info(f"Random proxy: {random_proxy}")
 
 
-main()
+if __name__ == "__main__":
+    # run the flow
+    asyncio.run(run_mtf_data_processor())
